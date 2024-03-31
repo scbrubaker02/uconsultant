@@ -9,27 +9,8 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from catalog import search
+from tools import UdacityCatalogSearchInput, UdacityCatalogSearch
 
-def document_example():
-    llm = ChatOpenAI()
-
-    prompt = ChatPromptTemplate.from_template("""Answer the following question based only on the provided context:
-
-    <context>
-    {context}
-    </context>
-
-    Question: {input}""")
-
-    document_chain = create_stuff_documents_chain(llm, prompt)
-
-    ans = document_chain.invoke({
-        "input": "how can langsmith help with testing?",
-        "context": [Document(page_content="langsmith can let you visualize test results")]
-    })
-
-    print(ans)
 
 def agent_example():
     prompt = ChatPromptTemplate.from_messages(
@@ -42,6 +23,8 @@ def agent_example():
     )
 
     print(prompt.messages)
+
+    search = UdacityCatalogSearch(max_results=20)
 
     tools = [search]
 
