@@ -9,10 +9,16 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from tools import UdacityCatalogSearchInput, UdacityCatalogSearch
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
+from dotenv import load_dotenv
+from tools import UdacityCatalogSearch
 
 
-def agent_example():
+def get_invoke_fn():
+    load_dotenv()
+
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "You are a solution architect at Udacity who helps clients assemble sequences of courses to achieve their learning goals."),
@@ -21,8 +27,6 @@ def agent_example():
             MessagesPlaceholder("agent_scratchpad"),
         ]
     )
-
-    print(prompt.messages)
 
     search = UdacityCatalogSearch(max_results=20)
 
@@ -37,12 +41,19 @@ def agent_example():
     # Create an agent executor by passing in the agent and tools
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    r = agent_executor.invoke({"input": "I need a short program of no more than two courses that will upskill my team's understanding of AWS."})
-    print(r['output'])
+    message_history = ChatMessageHistory()
 
-def main():
-    # document_example()
-    agent_example()
+    agent_with_chat_history = RunnableWithMessageHistory(
+        agent_executor,
+        # This is needed because in most real world scenarios, a session id is needed
+        # It isn't really used here because we are using a simple in memory ChatMessageHistory
+        lambda session_id: message_history,
+        input_messages_key="input",
+        history_messages_key="chat_history",
+    )
 
-if __name__ == "__main__":
-    main()
+    def invoke_fn(input):
+        return agent_with_chat_history.invoke({"input": input}, config={"configurable": {"session_id": "<foo>"}})
+
+    # Return a function that invokes the agent with a query
+    return invoke_fn
