@@ -9,6 +9,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Next, you will need to include your OpenAI API key in the `.env` file.
+```
+OPENAI_API_KEY=<insert your key here>
+```
+
 ## Development
 Run and interact with the bot at http://localhost:8501
 ```
